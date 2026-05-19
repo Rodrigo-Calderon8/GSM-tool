@@ -1,0 +1,35 @@
+services:
+  zomboid-server:
+    image: pepecitron/projectzomboid-server
+    container_name: pz-server
+    restart: unless-stopped
+    ports:
+      - "16261:16261/udp"
+      - "16262:16262/udp"
+    environment:
+      - SERVER_NAME=${SERVER_NAME:-GSMServer}
+      - SERVER_PASSWORD=${SERVER_PASSWORD:-password}
+      - SERVER_ADMIN_PASSWORD=${ADMIN_PASSWORD:-adminpassword}
+      - SERVER_MAX_PLAYER=${MAX_PLAYERS:-16}
+    volumes:
+      - ./game-data/server-files:/data/server-file
+      - ./game-data/config:/data/config
+
+  backup-manager:
+    build:
+      context: ./scripts
+      dockerfile: Dockerfile
+    container_name: pz-backup-manager
+    restart: unless-stopped
+    depends_on:
+      - zomboid-server
+    volumes:
+      - ./game-data:/game-data
+      - ./backups:/backups
+      - ./scripts:/scripts
+      - ~/.config/rclone:/root/.config/rclone # For rclone config
+    environment:
+      - BACKUP_INTERVAL_HOURS=${BACKUP_INTERVAL_HOURS:-5}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-3}
+      - RCLONE_REMOTE_NAME=${RCLONE_REMOTE_NAME:-gdrive}
+      - ENABLE_CLOUD_BACKUP=${ENABLE_CLOUD_BACKUP:-false}
