@@ -29,3 +29,25 @@ services:
       - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-3}
       - RCLONE_REMOTE_NAME=${RCLONE_REMOTE_NAME:-gdrive}
       - ENABLE_CLOUD_BACKUP=${ENABLE_CLOUD_BACKUP:-false}
+
+  gsm-backend:
+    build:
+      context: ./gui/backend
+    container_name: gsm-backend
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+      - ./backups:/backups
+    ports:
+      - "8000:8000"
+
+  gsm-gui:
+    build:
+      context: ./gui/frontend
+    container_name: gsm-gui
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - gsm-backend

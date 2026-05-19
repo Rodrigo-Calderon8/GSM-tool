@@ -1,15 +1,15 @@
 # GSM-Bot: Universal Game Server Manager
 
-GSM-Bot is an open-source tool that allows you to launch **any** dedicated game server using Docker with just one command. It includes an automated background script to handle game saves and backups, ensuring you never lose progress.
+GSM-Bot is an open-source tool that allows you to launch **any** dedicated game server using Docker with just one command. It includes a professional web-based dashboard and automated background backups.
 
 ## Features
 
+- **Professional GUI**: Modern, dark-themed dashboard to manage your server.
 - **Universal Compatibility**: Works with any game that has a Docker image (Minecraft, Project Zomboid, Valheim, etc.).
-- **One-Click Launch**: Start your server and backup manager with a single command.
+- **One-Click Launch**: Use `./start.sh` to launch the server and open the dashboard automatically.
 - **Automated Backups**: Backs up game data every 5 hours (configurable).
-- **Smart Retention**: Automatically keeps backups for 3 days to save disk space.
-- **Cloud Integration**: Optional sync to Google Drive or other cloud providers via `rclone`.
-- **Easy Restoration**: Simple interactive script to restore from timestamped backups.
+- **Easy Restoration**: Restore from timestamped backups directly via the GUI.
+- **Cloud Integration**: Optional sync to Google Drive via `rclone`.
 
 ---
 
@@ -20,88 +20,52 @@ GSM-Bot is an open-source tool that allows you to launch **any** dedicated game 
 
 ---
 
-## Getting Started
+## Quick Start
 
-### 1. Basic Configuration (`.env`)
+1.  **Launch Everything**:
+    ```bash
+    chmod +x start.sh
+    ./start.sh
+    ```
+    This will start the server and automatically open the dashboard at `http://localhost:3000`.
 
-Configure the core settings in the `.env` file:
+2.  **Login**: Use the default password `admin` (or leave it blank if not configured).
 
-```bash
-# Game Image (e.g., itzg/minecraft-server or pepecitron/projectzomboid-server)
-GAME_IMAGE=pepecitron/projectzomboid-server
+---
 
-# Internal path where the game stores saves
-GAME_INTERNAL_DATA_PATH=/data
+## Configuration
 
-# Ports to expose (host:container/protocol)
-GAME_PORT_1=16261:16261/udp
-GAME_PORT_2=16262:16262/udp
+### Core Settings (`.env`)
+Configure the core infrastructure and backup settings here.
 
-# Backup Settings
-BACKUP_INTERVAL_HOURS=5
-BACKUP_RETENTION_DAYS=3
-```
+### Game Settings (`game.env`)
+Add game-specific environment variables (e.g., `SERVER_PASSWORD`, `EULA=TRUE`).
 
-### 2. Game-Specific Configuration (`game.env`)
-
-Add any environment variables required by your chosen game image to `game.env`.
-
-**Example for Project Zomboid:**
-```bash
-SERVER_NAME=GSMServer
-SERVER_PASSWORD=password
-SERVER_ADMIN_PASSWORD=adminpassword
-```
-
-**Example for Minecraft:**
-```bash
-EULA=TRUE
-MEMORY=4G
-```
-
-### 3. Launch the Server
-
-```bash
-docker compose up -d
-```
+**Note**: You can also edit these directly in the **Settings** tab of the GUI!
 
 ---
 
 ## Usage
 
-### Manual Backups
-Trigger a backup immediately:
-```bash
-docker exec gsm-backup-manager python backup.py
-```
+### Dashboard
+- **Console**: View live server logs.
+- **Controls**: Start, Stop, or Restart your server instance.
+- **Manual Backup**: Click "Backup Now" (with confirmation) to trigger an immediate save.
 
-### Restoring a Backup
-1. Run the restore script:
-   ```bash
-   docker exec -it gsm-backup-manager python restore.py
-   ```
-2. Follow the prompt and then restart the server:
-   ```bash
-   docker compose restart game-server
-   ```
-
-### Cloud Backups
-Update `.env`:
-```bash
-ENABLE_CLOUD_BACKUP=true
-RCLONE_REMOTE_NAME=your_remote
-```
-Ensure your `rclone.conf` is at `~/.config/rclone/rclone.conf`.
+### Backups
+- View all historical backups.
+- Click **Restore** to roll back your server to a specific point in time.
 
 ---
 
 ## Technical Architecture
 
-GSM-Bot uses a sidecar pattern:
-- **game-server**: The container running your game.
-- **backup-manager**: A Python-based container that monitors `./game-data` and manages backups.
+- **gsm-gui**: Static frontend (Nginx) at port 3000.
+- **gsm-backend**: FastAPI server at port 8000 (controls Docker).
+- **game-server**: Your chosen game container.
+- **backup-manager**: Sidecar container for automated tasks.
 
 ## Directory Structure
-- `game-data/`: Local folder mapped to the game's internal data path.
-- `backups/`: Local storage for `.zip` backups.
-- `scripts/`: Backup and restore logic.
+- `game-data/`: Shared volume for game saves/config.
+- `backups/`: Local storage for `.zip` files.
+- `gui/`: Source code for the dashboard.
